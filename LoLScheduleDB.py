@@ -6,7 +6,7 @@ class LoLScheduleDatabase():
 
     def __init__(self):
         # Check if DB and table exist, and create it if needed
-        
+        #
         logging.basicConfig(filename='log.log',level=logging.ERROR,\
               format='%(asctime)s -- %(filename)s -- %(funcName)s -- %(levelname)s -- %(message)s')
         logging.info("Initialisation DB")
@@ -15,7 +15,24 @@ class LoLScheduleDatabase():
             db = data.cursor()
 
             db.execute('''CREATE TABLE IF NOT EXISTS games 
-                        (gameid,starttime,resolved,team1id,team1,team1win,team2id,team2,team2win,winner,match_type,BO,tiebreak,leagueid,leaguename,leagueroundname,tournamentid,tournamentname)''')
+                        (gameid,
+                        starttime,
+                        resolved,
+                        team1id,
+                        team1,
+                        team1win,
+                        team2id,
+                        team2,
+                        team2win,
+                        winner,
+                        match_type,
+                        BO,
+                        tiebreak,
+                        leagueid,
+                        leaguename,
+                        leagueroundname,
+                        tournamentid,
+                        tournamentname)''')
 
             data.commit()
             data.close()
@@ -47,10 +64,47 @@ class LoLScheduleDatabase():
         try:
             data = sqlite3.connect('LoL_calendar.db')
             db = data.cursor()
-            db.execute("INSERT INTO games (gameid,starttime,resolved,team1id,team1,team1win,team2id,team2,team2win,winner,match_type,BO,tiebreak,leagueid,leaguename,leagueroundname,tournamentid,tournamentname) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-                    (gameInfo['gameid'],gameInfo['starttime'],gameInfo['resolved'],gameInfo['team1id'],gameInfo['team1'],gameInfo['team1win'],gameInfo['team2id'],gameInfo['team2'],gameInfo['team2win'],gameInfo['winner'],gameInfo['match_type'],gameInfo['BO'],gameInfo['tiebreak'],gameInfo['leagueid'],gameInfo['leaguename'],gameInfo['leagueroundname'],gameInfo['tournamentid'],gameInfo['tournamentname']))
+            db.execute('''INSERT INTO games 
+                (gameid,
+                starttime,
+                resolved,
+                team1id,
+                team1,
+                team1win,
+                team2id,
+                team2,
+                team2win,
+                winner,
+                match_type,
+                BO,
+                tiebreak,
+                leagueid,
+                leaguename,
+                leagueroundname,
+                tournamentid,
+                tournamentname) 
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', 
+                (gameInfo['gameid'],
+                gameInfo['starttime'],
+                gameInfo['resolved'],
+                gameInfo['team1id'],
+                gameInfo['team1'],
+                gameInfo['team1win'],
+                gameInfo['team2id'],
+                gameInfo['team2'],
+                gameInfo['team2win'],
+                gameInfo['winner'],
+                gameInfo['match_type'],
+                gameInfo['BO'],
+                gameInfo['tiebreak'],
+                gameInfo['leagueid'],
+                gameInfo['leaguename'],
+                gameInfo['leagueroundname'],
+                gameInfo['tournamentid'],
+                gameInfo['tournamentname']))
             data.commit()
             data.close()
+
         except Exception as e:
             logging.critical("recordGame" + str(e))
 
@@ -63,25 +117,68 @@ class LoLScheduleDatabase():
 
             if gameInfo['team1'] != gameid_exist['team1'] or gameInfo['team2'] != gameid_exist['team2'] or gameInfo['starttime'] != gameid_exist['starttime']:
                 # it means API datas have been changed after first record, we update everything
-                db.execute("UPDATE games SET starttime = ? , resolved = ? , team1id = ? , team1 = ? , team1win = ? , team2id = ? , team2 = ? , team2win = ? , winner = ? , match_type = ? , BO = ? , tiebreak = ? , leagueid = ? , leaguename = ? , leagueroundname = ? , tournamentid = ? , tournamentname = ?  WHERE gameid = ?", 
-                        (gameInfo['starttime'],gameInfo['resolved'],gameInfo['team1id'],gameInfo['team1'],gameInfo['team1win'],gameInfo['team2id'],gameInfo['team2'],gameInfo['team2win'],gameInfo['winner'],gameInfo['match_type'],gameInfo['BO'],gameInfo['tiebreak'],gameInfo['leagueid'],gameInfo['leaguename'],gameInfo['leagueroundname'],gameInfo['tournamentid'],gameInfo['tournamentname'],gameInfo['gameid']))
+                db.execute('''UPDATE games SET 
+                    starttime = ? ,
+                    resolved = ? ,
+                    team1id = ? , 
+                    team1 = ? , 
+                    team1win = ? , 
+                    team2id = ? ,
+                    team2 = ? , 
+                    team2win = ? , 
+                    winner = ? , 
+                    match_type = ? , 
+                    BO = ? , 
+                    tiebreak = ? , 
+                    leagueid = ? , 
+                    leaguename = ? , 
+                    leagueroundname = ? , 
+                    tournamentid = ? , 
+                    tournamentname = ?  
+                    WHERE gameid = ?''', 
+                    (gameInfo['starttime'],
+                    gameInfo['resolved'],
+                    gameInfo['team1id'],
+                    gameInfo['team1'],
+                    gameInfo['team1win'],
+                    gameInfo['team2id'],
+                    gameInfo['team2'],
+                    gameInfo['team2win'],
+                    gameInfo['winner'],
+                    gameInfo['match_type'],
+                    gameInfo['BO'],
+                    gameInfo['tiebreak'],
+                    gameInfo['leagueid'],
+                    gameInfo['leaguename'],
+                    gameInfo['leagueroundname'],
+                    gameInfo['tournamentid'],
+                    gameInfo['tournamentname'],
+                    gameInfo['gameid']))
+
                 logging.info("Changement des teams/horaire du match")
 
             if gameInfo['winner'] != gameid_exist['winner']:
-                db.execute("UPDATE games SET resolved = ?, winner = ?  WHERE gameid = ?", 
-                        (gameInfo['resolved'],gameInfo['winner'],gameInfo['gameid']))
+                db.execute('''UPDATE games SET 
+                    resolved = ?, 
+                    winner = ?  
+                    WHERE gameid = ?''', 
+                    (gameInfo['resolved'],
+                    gameInfo['winner'],
+                    gameInfo['gameid']))
+
                 logging.info("Nous avons un vainqueur")
+                
                 gameIsUpdated = gameInfo
 
             elif gameInfo['resolved'] == "LIVE" and gameid_exist['resolved'] != "LIVE":
-                db.execute("UPDATE games SET resolved = ?  WHERE gameid = ?", 
+                db.execute('''UPDATE games SET resolved = ?  WHERE gameid = ?''', 
                         (gameInfo['resolved'],gameInfo['gameid']))
                 logging.info("Changement de status du match")
                 gameIsUpdated = gameInfo
 
             elif str(gameInfo['team1win']) != str(gameid_exist['team1win']) or str(gameInfo['team2win']) != str(gameid_exist['team2win']):
 
-                db.execute("UPDATE games SET team1win = ?, team2win = ?  WHERE gameid = ?", 
+                db.execute('''UPDATE games SET team1win = ?, team2win = ?  WHERE gameid = ?''', 
                         (gameInfo['team1win'],gameInfo['team2win'],gameInfo['gameid']))
                 logging.info("Evolution du score du BO")
                 gameIsUpdated = gameInfo
